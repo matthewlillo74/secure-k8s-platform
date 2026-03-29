@@ -14,8 +14,17 @@ terraform{
    # }
 }
 
+
 provider "aws" {
-    region = "us-east-1"
+  region = "us-east-1"
+  default_tags {
+    tags = {
+      Project     = "secure-k8s-platform"
+      Environment = "dev"
+      ManagedBy   = "terraform"
+      Owner       = "mjl"
+    }
+  }
 }
 
 #S3 bucket for terraform remote state
@@ -62,7 +71,7 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
 #with two private and two public subnets across two availability zones
 module "vpc" {
     source = "terraform-aws-modules/vpc/aws"
-    version = "~> 3.0"
+    version = "~> 5.0"
 
     name = "mjl-k8s-vpc"
     cidr = "10.0.0.0/16"
@@ -120,4 +129,8 @@ resource "aws_kms_key" "eks_secrets" {
     description = "EKS secret encryption key"
     deletion_window_in_days = 7
     enable_key_rotation = true
+}
+resource "aws_kms_alias" "eks_secrets" {
+  name          = "alias/eks-secrets-mjl"
+  target_key_id = aws_kms_key.eks_secrets.key_id
 }
