@@ -1,0 +1,33 @@
+apiVersion rbac.authorization.k8s.io/v1
+kind ClusterRole
+metadata:
+  name: falco-clusterrole
+rules:
+#rule 1 block core api resources
+- apiGroups: [""]
+  resources: ["nodes", "pods", "namespaces", "replicationcontrollers", "services", "events"]
+  verbs: ["get", "watch", "list"]
+  #block 2: Core api configmaps (get ONLY)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+  #Block 3: Apps API resources (get, list, watch)
+- apiGroups: ["apps"]
+  resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "watch", "list"]
+---
+#Assignment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: falco-binding
+  subjects:
+  #cluster-wide role to specific falco service account
+- kind: ServiceAccount
+  name: falco-sa
+  namespace: security
+roleRef:
+  kind: ClusterRole
+  name: falco-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+  
