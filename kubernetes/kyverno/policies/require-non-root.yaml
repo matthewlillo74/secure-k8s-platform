@@ -18,3 +18,17 @@ spec:
         spec:
           securityContext:
             runAsNonRoot: true
+  - name: check-no-root-user
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: [apps]
+    validate:
+      message: "runAsUser must not be 0 (root)."
+      pattern:
+        spec:
+          containers:
+          - name: "*"
+            =(securityContext):
+              =(runAsUser): ">0"

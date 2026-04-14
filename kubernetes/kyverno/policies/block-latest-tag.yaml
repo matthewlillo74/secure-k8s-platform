@@ -10,7 +10,7 @@ spec:
     match:
       any:
       - resources:
-          kinds: [Pod]
+          kinds: [Deployment, DaemonSet, StatefulSet]
           namespaces: [apps]
     validate:
       message: "Images must not use the 'latest' tag or be untagged. Use a specific version or digest."
