@@ -1,0 +1,28 @@
+driver:
+  kind: modern_ebpf
+
+tty: true
+
+falcoctl:
+  artifact:
+    install:
+      enabled: false
+    follow:
+      enabled: false
+
+collectors:
+  kubernetes:
+    enabled: false
+
+falco:
+  plugins: []
+  load_plugins: []
+  config_files:
+    - /etc/falco/config.d/falco.iso8601_timeformat.yaml
+
+falcosidekick:
+  enabled: true
+  replicaCount: 1
+  webui:
+    enabled: true
+    replicaCount: 1
