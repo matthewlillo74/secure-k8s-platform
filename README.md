@@ -60,7 +60,7 @@ The platform enforces security at five distinct layers, each backing up the last
 
 **Observability:** Prometheus, Grafana, Alertmanager
 
-**CI/CD:** GitHub Actions, Checkov, Trivy, Gitleaks
+
 
 ---
 
