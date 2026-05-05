@@ -429,7 +429,3 @@ terraform destroy
 
 ---
 
-## Certifications
-
-- AWS Solutions Architect Associate
-- CompTIA Security+
