@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: security-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: kyverno.rules
+    rules:
+    - alert: KyvernoPolicyViolation
+      expr: sum(kyverno_policy_results_total{rule_result="fail"}) by (policy_name) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Kyverno policy violation detected"
+        description: "Policy {{ $labels.policy_name }} has active violations"
+  - name: pod.rules
+    rules:
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total{namespace="apps"}[5m]) > 0
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod crash looping in apps namespace"
+        description: "Pod {{ $labels.pod }} is crash looping"
+    - alert: PodNotRunning
+      expr: kube_pod_status_phase{namespace="apps", phase!="Running"} > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod not running in apps namespace"
+        description: "Pod {{ $labels.pod }} is in {{ $labels.phase }} state"
