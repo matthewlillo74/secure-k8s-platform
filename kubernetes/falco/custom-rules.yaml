@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-custom-rules
+  namespace: security
+data:
+  custom-rules.yaml: |
+    - rule: Package Manager Executed in Container
+      desc: >
+        Detects execution of package managers inside a running container.
+        Attackers often install tools post-compromise to enable further exploitation.
+      condition: >
+        spawned_process and container
+        and proc.name in (apt, apt-get, apk, yum, dnf, pip, pip3, npm, gem)
+      output: >
+        Package manager executed in container
+        (user=%user.name command=%proc.cmdline
+        container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name)
+      priority: WARNING
+      tags: [container, supply_chain, T1072]
+
+    - rule: Sensitive File Read in Container
+      desc: >
+        Detects reads of sensitive credential files inside containers.
+        Reading /etc/shadow indicates credential access attempts.
+      condition: >
+        open_read and container
+        and fd.name in (/etc/shadow, /etc/gshadow, /etc/master.passwd, /etc/passwd)
+        and not proc.name in (passwd, shadow, useradd, usermod, id, whoami)
+      output: >
+        Sensitive file read in container
+        (user=%user.name command=%proc.cmdline file=%fd.name
+        container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name)
+      priority: CRITICAL
+      tags: [container, credential_access, T1003]
+
+    - rule: Shell Spawned in Container
+      desc: >
+        A shell was spawned inside a running container.
+        Strong indicator of hands-on-keyboard attacker activity.
+      condition: >
+        spawned_process and container
+        and proc.name in (sh, bash, zsh, dash, fish)
+        and proc.pname != runc
+      output: >
+        Shell spawned in container
+        (user=%user.name shell=%proc.name parent=%proc.pname
+        container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name)
+      priority: CRITICAL
+      tags: [container, execution, T1059]
+
+    - rule: Write Attempt to /etc in Container
+      desc: >
+        Detects any write attempt to the /etc directory inside a container.
+        Writes to /etc indicate persistence attempts.
+      condition: >
+        open_write and container
+        and fd.name startswith /etc
+      output: >
+        Write to /etc attempted in container
+        (user=%user.name command=%proc.cmdline file=%fd.name
+        container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name)
+      priority: ERROR
+      tags: [container, persistence, T1222]
+
+    - rule: Unexpected Outbound Connection from Backend
+      desc: >
+        Detects outbound network connections from the backend container
+        to destinations outside the cluster CIDR. May indicate C2 beaconing.
+      condition: >
+        outbound and container
+        and container.name = "backend"
+        and not fd.sip in (10.42.0.0/16, 10.43.0.0/16)
+      output: >
+        Unexpected outbound connection from backend
+        (command=%proc.cmdline connection=%fd.name
+        container=%container.name namespace=%k8s.ns.name)
+      priority: WARNING
+      tags: [network, exfiltration, T1048]
